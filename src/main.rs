@@ -1,9 +1,9 @@
+mod db;
 use std::path::PathBuf;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 use clap::{Parser, Subcommand, ValueEnum};
-use rusqlite::Connection;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -66,50 +66,20 @@ fn main() -> Result<()> {
 
     match &cli.command {
         Commands::Init => {
-            let conn = Connection::open(&cli.db).with_context(|| {
-                format!(
-                    "Failed to create a connection with database \
-                     at: {}",
-                    cli.db.display()
-                )
-            })?;
+            let existed = cli.db.exists();
+            let conn = db::create_connection(&cli.db)?;
+            db::init_schema(&conn)?;
 
-            conn.set_db_config(
-                rusqlite::config::DbConfig::SQLITE_DBCONFIG_ENABLE_FKEY,
-                true,
-            )
-            .context("Failed to set Enable Foreign Key enforcement.")?;
-
-            conn.execute_batch(
-                "CREATE TABLE IF NOT EXISTS sources (
-                         id INTEGER PRIMARY KEY,
-                         path TEXT NOT NULL UNIQUE,
-                         kind TEXT NOT NULL,
-                         title TEXT NOT NULL,
-                         author TEXT,
-                         tags TEXT,
-                         content_hash TEXT NOT NULL,
-                         added_at TEXT DEFAULT CURRENT_TIMESTAMP
-                     );
-                     CREATE TABLE IF NOT EXISTS chunks (
-                         id INTEGER PRIMARY KEY,
-                         source_id INTEGER NOT NULL REFERENCES
-                         sources(id)
-                         ON DELETE CASCADE,
-                         chunk_index INTEGER NOT NULL,
-                         UNIQUE (source_id, chunk_index)
-                     );
-                     CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts
-                         USING fts5(text, tokenize = 'porter');
-                     ",
-            )?;
-
-            println!("Successfully initialized db at: {}", cli.db.display());
+            if existed {
+                println!("Reinitialized db at: {}", cli.db.display());
+            } else {
+                println!("Successfully initialized db at: {}", cli.db.display());
+            }
         }
         Commands::Add { .. } => todo!(),
         Commands::Search { .. } => todo!(),
         Commands::Show { .. } => todo!(),
-        Commands::Status { .. } => todo!(),
+        Commands::Status => todo!(),
         Commands::Remove { .. } => todo!(),
     }
 
