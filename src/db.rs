@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use rusqlite::Connection;
+use rusqlite::{Connection, OpenFlags};
 
 const SCHEMA_VERSION: i64 = 1;
 
@@ -24,6 +24,18 @@ pub fn create_connection(path: &Path) -> Result<Connection> {
         )
     })?;
 
+    enable_fk(&conn)?;
+    Ok(conn)
+}
+
+pub fn open_connection(path: &Path) -> Result<Connection> {
+    let conn = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_WRITE)
+        .with_context(|| {
+            format!(
+                "no database found at {} - run `eidolon init` first",
+                path.display()
+            )
+        })?;
     enable_fk(&conn)?;
     Ok(conn)
 }
