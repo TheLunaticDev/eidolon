@@ -13,7 +13,6 @@ pub struct Cli {
     pub command: Commands,
 }
 
-
 pub fn get_cli() -> Cli {
     Cli::parse()
 }

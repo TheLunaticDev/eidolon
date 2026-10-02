@@ -1,7 +1,8 @@
+pub mod add;
 pub mod init;
 
-use std::path::PathBuf;
 use clap::{Subcommand, ValueEnum};
+use std::path::PathBuf;
 
 #[derive(Subcommand)]
 pub enum Commands {

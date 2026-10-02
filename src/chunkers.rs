@@ -51,10 +51,7 @@ mod tests {
         let text = "This is first line.\n\nThis is second line.";
         assert_eq!(
             chunker(&text),
-            vec![
-                "This is first line.",
-                "This is second line.",
-            ]
+            vec!["This is first line.", "This is second line.",]
         );
     }
 
@@ -63,10 +60,7 @@ mod tests {
         let text = "This is first line.\n\n\nThis is second line.";
         assert_eq!(
             chunker(&text),
-            vec![
-                "This is first line.",
-                "This is second line.",
-            ]
+            vec!["This is first line.", "This is second line.",]
         );
     }
 
@@ -75,10 +69,7 @@ mod tests {
         let text = "This is\n\nfirst line.\n\nThis is \n\n\nsecond line.\n";
         assert_eq!(
             chunker(&text),
-            vec![
-                "This is first line.",
-                "This is second line.",
-            ]
+            vec!["This is first line.", "This is second line.",]
         );
     }
 
@@ -97,12 +88,7 @@ mod tests {
     #[test]
     fn test_chunker_whitespace_collapse() {
         let text = "This is   \n   a single   line.";
-        assert_eq!(
-            chunker(&text),
-            vec![
-                "This is a single line.",
-            ]
-        );
+        assert_eq!(chunker(&text), vec!["This is a single line.",]);
     }
 
     #[test]

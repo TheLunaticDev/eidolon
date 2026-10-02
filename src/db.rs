@@ -29,13 +29,14 @@ pub fn create_connection(path: &Path) -> Result<Connection> {
 }
 
 pub fn open_connection(path: &Path) -> Result<Connection> {
-    let conn = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_WRITE)
-        .with_context(|| {
+    let conn = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_WRITE).with_context(
+        || {
             format!(
                 "no database found at {} - run `eidolon init` first",
                 path.display()
             )
-        })?;
+        },
+    )?;
     enable_fk(&conn)?;
     Ok(conn)
 }
@@ -44,11 +45,13 @@ pub fn init_schema(conn: &Connection) -> Result<()> {
     let user_version: i64 = conn.query_row("PRAGMA user_version", [], |row| row.get(0))?;
 
     if user_version > SCHEMA_VERSION {
-        anyhow::bail!("Database schema version {user_version} is newer than this binary supports ({SCHEMA_VERSION})");
+        anyhow::bail!(
+            "Database schema version {user_version} is newer than this binary supports ({SCHEMA_VERSION})"
+        );
     }
 
     conn.execute_batch(
-            "
+        "
          CREATE TABLE IF NOT EXISTS sources (
              id INTEGER PRIMARY KEY,
              path TEXT NOT NULL UNIQUE,
@@ -109,7 +112,7 @@ mod tests {
         let result = conn.execute(
             "INSERT INTO chunks (id, source_id, chunk_index)
              VALUES (1, 1, 0);",
-            []
+            [],
         );
         match result {
             Err(rusqlite::Error::SqliteFailure(e, _)) => {
@@ -129,54 +132,46 @@ mod tests {
         conn.execute(
             "INSERT INTO sources (id, path, kind, title, content_hash)
              VALUES (1, 'somewhere', 'text', 'something', 'hash')",
-            []
+            [],
         )?;
         conn.execute(
             "INSERT INTO chunks (id, source_id, chunk_index)
              VALUES (1, 1, 0)",
-            []
+            [],
         )?;
-        assert!(
-            conn.query_row(
-                "SELECT EXISTS(
+        assert!(conn.query_row(
+            "SELECT EXISTS(
                      SELECT * FROM sources WHERE id = 1
                  )",
-                [],
-                |row| row.get(0)
-            )?
-        );
-        assert!(
-            conn.query_row(
-                "SELECT EXISTS(
+            [],
+            |row| row.get(0)
+        )?);
+        assert!(conn.query_row(
+            "SELECT EXISTS(
                      SELECT * FROM chunks WHERE id = 1
                  )",
-                [],
-                |row| row.get(0)
-            )?
-        );
+            [],
+            |row| row.get(0)
+        )?);
         conn.execute(
             "DELETE FROM sources
              WHERE id = 1",
-            []
+            [],
         )?;
-        assert!(
-            !conn.query_row(
-                "SELECT EXISTS(
+        assert!(!conn.query_row(
+            "SELECT EXISTS(
                      SELECT * FROM sources WHERE id = 1
                  )",
-                [],
-                |row| row.get(0)
-            )?
-        );
-        assert!(
-            !conn.query_row(
-                "SELECT EXISTS(
+            [],
+            |row| row.get(0)
+        )?);
+        assert!(!conn.query_row(
+            "SELECT EXISTS(
                      SELECT * FROM chunks WHERE id = 1
                  )",
-                [],
-                |row| row.get(0)
-            )?
-        );
+            [],
+            |row| row.get(0)
+        )?);
         Ok(())
     }
 
